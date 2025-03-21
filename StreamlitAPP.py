@@ -1,4 +1,5 @@
 import os
+import io
 import json
 import traceback
 import pandas as pd
@@ -16,7 +17,7 @@ with open('/Users/nk/WorkingDirectory/Python/mcqgen/Response.json', 'r') as file
 
 #creating a title for the app
 st.title("MCQ Creator Application with Langchain")
-
+response = None 
 #Create a form using st form
 with st.form("user_inputs"):
     #file Upload
@@ -75,3 +76,27 @@ with st.form("user_inputs"):
                             st.error("Error in the table data")
                     else:
                         st.write(response)
+
+#Add Download Button
+if response:
+    quiz = response.get("quiz", None)
+
+    if quiz:
+        table_data = get_table_data(quiz)
+
+        if isinstance(table_data, list) and all(isinstance(row, dict) for row in table_data):
+            df = pd.DataFrame(table_data)  # Convert to DataFrame
+
+            # Save DataFrame as CSV in-memory
+            csv_buffer = io.StringIO()
+            df.to_csv(csv_buffer, index=False)  # Convert DataFrame to CSV
+
+            # Download button for CSV
+            st.download_button(
+                label="Download MCQs",
+                data=csv_buffer.getvalue(),
+                file_name="MCQs.csv",
+                mime="text/csv"
+            )
+        else:
+            st.error("Error: Invalid table data format.")
